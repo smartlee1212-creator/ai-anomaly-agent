@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl max-w-md mx-auto w-full">
+    <h2 class="text-lg font-bold text-cyan-400 mb-4">🔐 Secure Email Login</h2>
+    {% if error %}
+        <div class="bg-rose-900/40 text-rose-300 p-3 rounded mb-4 text-sm border border-rose-700">{{ error }}</div>
+    {% endif %}
+    <form method="POST" class="space-y-4">
+        <div>
+            <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Email Address</label>
+            <input type="email" name="email" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500" placeholder="user@example.com">
+        </div>
+        <div>
+            <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Password</label>
+            <input type="password" name="password" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500">
+        </div>
+        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded transition">Access Vault</button>
+    </form>
+    <p class="text-xs text-slate-400 mt-4 text-center">New user? <a href="/register" class="text-cyan-400 hover:underline">Register with email</a></p>
+</div>
+{% endblock %}

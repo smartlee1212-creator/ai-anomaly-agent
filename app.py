@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import sqlite3
 import urllib.request
 import json
@@ -7,9 +7,7 @@ from google import genai
 
 app = Flask(__name__)
 app.secret_key = 'your_secure_random_production_secret_key_here'
-
-# Direct initialization with your API key to prevent 500 errors
-client = genai.Client(api_key='YOUR_ACTUAL_API_KEY_HERE')
+client = genai.Client()
 
 cache = {"timestamp": 0, "data": None}
 
@@ -27,39 +25,6 @@ def init_db():
     conn.close()
 
 init_db()
-
-BASE_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Anomaly Detection Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 font-sans p-4 min-h-screen flex flex-col justify-between">
-    <div class="max-w-xl mx-auto w-full space-y-6">
-        <header class="border-b border-slate-800 pb-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold text-cyan-400">🤖 AI Data & Anomaly Agent</h1>
-                <p class="text-sm text-slate-400">Email Vault & LLM Engine</p>
-            </div>
-            {% if session.get('user_email') %}
-                <div class="flex items-center space-x-3">
-                    <span class="text-xs text-emerald-400 font-mono">{{ session['user_email'] }}</span>
-                    <a href="/logout" class="text-xs bg-rose-900/50 text-rose-300 px-3 py-1 rounded border border-rose-700 hover:bg-rose-800">Logout</a>
-                </div>
-            {% endif %}
-        </header>
-
-        {% block content %}{% endblock %}
-    </div>
-    <footer class="text-center text-xs text-slate-500 py-4">
-        Protected Agent Environment &bull; Powered by Google Gemini
-    </footer>
-</body>
-</html>
-"""
 
 @app.route('/')
 def index():
@@ -86,28 +51,7 @@ def login():
         else:
             error = 'Invalid email or password.'
             
-    content = f"""
-    {{% extends "base" %}}
-    {{% block content %}}
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl max-w-md mx-auto w-full">
-        <h2 class="text-lg font-bold text-cyan-400 mb-4">🔐 Secure Email Login</h2>
-        {f'<div class="bg-rose-900/40 text-rose-300 p-3 rounded mb-4 text-sm border border-rose-700">{error}</div>' if error else ''}
-        <form method="POST" class="space-y-4">
-            <div>
-                <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Email Address</label>
-                <input type="email" name="email" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500" placeholder="user@example.com">
-            </div>
-            <div>
-                <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500">
-            </div>
-            <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded transition">Access Vault</button>
-        </form>
-        <p class="text-xs text-slate-400 mt-4 text-center">New user? <a href="/register" class="text-cyan-400 hover:underline">Register with email</a></p>
-    </div>
-    {{% endblock %}}
-    """
-    return render_template_string(BASE_TEMPLATE.replace('{% block content %}{% endblock %}', content))
+    return render_template('login.html', error=error)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -129,76 +73,13 @@ def register():
             except sqlite3.IntegrityError:
                 error = 'Email address already registered.'
                 
-    content = f"""
-    {{% extends "base" %}}
-    {{% block content %}}
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl max-w-md mx-auto w-full">
-        <h2 class="text-lg font-bold text-cyan-400 mb-4">📝 Register Account</h2>
-        {f'<div class="bg-rose-900/40 text-rose-300 p-3 rounded mb-4 text-sm border border-rose-700">{error}</div>' if error else ''}
-        <form method="POST" class="space-y-4">
-            <div>
-                <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Email Address</label>
-                <input type="email" name="email" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500" placeholder="user@example.com">
-            </div>
-            <div>
-                <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500">
-            </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded transition">Create Account</button>
-        </form>
-        <p class="text-xs text-slate-400 mt-4 text-center">Already have an account? <a href="/login" class="text-cyan-400 hover:underline">Login here</a></p>
-    </div>
-    {{% endblock %}}
-    """
-    return render_template_string(BASE_TEMPLATE.replace('{% block content %}{% endblock %}', content))
+    return render_template('register.html', error=error)
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_email' not in session:
         return redirect(url_for('login'))
-        
-    content = """
-    {% extends "base" %}
-    {% block content %}
-    <div class="space-y-4">
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Live Market Telemetry</h2>
-            <div id="data-container" class="text-sm space-y-1 font-mono text-slate-300">
-                Fetching live metrics...
-            </div>
-        </div>
-
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-            <h2 class="text-sm font-semibold text-cyan-400 uppercase tracking-wider mb-2">AI Engineer Analysis</h2>
-            <div id="ai-insight" class="text-sm text-slate-300 leading-relaxed">
-                Consulting Gemini model...
-            </div>
-        </div>
-    </div>
-
-    <script>
-        async function fetchAgentData() {
-            try {
-                const response = await fetch('/api/data');
-                const result = await response.json();
-                
-                document.getElementById('data-container').innerHTML = `
-                    <div>Asset: <span class="text-white font-bold">${result.symbol}</span></div>
-                    <div>Price: <span class="text-emerald-400 font-bold">$${result.price}</span></div>
-                    <div>24h Change: <span class="text-amber-400">${result.change}%</span></div>
-                `;
-                
-                document.getElementById('ai-insight').innerText = result.analysis;
-            } catch (err) {
-                document.getElementById('ai-insight').innerText = "Error syncing with agent backend.";
-            }
-        }
-        fetchAgentData();
-        setInterval(fetchAgentData, 45000);
-    </script>
-    {% endblock %}
-    """
-    return render_template_string(BASE_TEMPLATE.replace('{% block content %}{% endblock %}', content))
+    return render_template('dashboard.html', email=session['user_email'])
 
 @app.route('/logout')
 def logout():
