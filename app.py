@@ -7,7 +7,9 @@ from google import genai
 
 app = Flask(__name__)
 app.secret_key = 'your_secure_random_production_secret_key_here'
-client = genai.Client()
+
+# Initialize with your API key directly
+client = genai.Client(api_key='YOUR_ACTUAL_API_KEY_HERE')
 
 cache = {"timestamp": 0, "data": None}
 
