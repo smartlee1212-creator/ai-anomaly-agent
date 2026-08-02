@@ -1,21 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl max-w-md mx-auto w-full">
-    <h2 class="text-lg font-bold text-cyan-400 mb-4">📝 Register Account</h2>
+<div class="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-2xl max-w-md mx-auto w-full mt-10">
+    <div class="mb-6 text-center">
+        <h2 class="text-lg font-bold text-cyan-400">📝 Create Account</h2>
+        <p class="text-xs text-slate-400 mt-1">Register for secure anomaly intelligence access</p>
+    </div>
+
     {% if error %}
-        <div class="bg-rose-900/40 text-rose-300 p-3 rounded mb-4 text-sm border border-rose-700">{{ error }}</div>
+        <div class="bg-rose-950 text-rose-300 p-3 rounded mb-4 text-xs border border-rose-800 font-medium">{{ error }}</div>
     {% endif %}
+
     <form method="POST" class="space-y-4">
         <div>
-            <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Email Address</label>
-            <input type="email" name="email" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500" placeholder="user@example.com">
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Email Address</label>
+            <input type="email" name="email" required class="w-full bg-slate-950 border border-slate-700 rounded p-2.5 text-sm text-white focus:outline-none focus:border-cyan-500" placeholder="user@example.com">
         </div>
         <div>
-            <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Password</label>
-            <input type="password" name="password" required class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-white focus:outline-none focus:border-cyan-500">
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Password (Min 6 Characters)</label>
+            <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-700 rounded p-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
         </div>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded transition">Create Account</button>
+        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded transition text-sm shadow-md">Register Account</button>
     </form>
-    <p class="text-xs text-slate-400 mt-4 text-center">Already have an account? <a href="/login" class="text-cyan-400 hover:underline">Login here</a></p>
+    
+    <p class="text-xs text-slate-400 mt-5 text-center">Already registered? <a href="/login" class="text-cyan-400 hover:underline font-medium">Log in here</a></p>
 </div>
 {% endblock %}
