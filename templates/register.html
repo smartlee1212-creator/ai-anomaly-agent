@@ -1,27 +1,31 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-2xl max-w-md mx-auto w-full mt-10">
-    <div class="mb-6 text-center">
-        <h2 class="text-lg font-bold text-cyan-400">📝 Create Account</h2>
-        <p class="text-xs text-slate-400 mt-1">Register for secure anomaly intelligence access</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Anomaly Agent - Register</title>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #38bdf8; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #0284c7; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #0369a1; }
+        .error { color: #f87171; font-size: 0.9rem; text-align: center; }
+        p { text-align: center; font-size: 0.9rem; }
+        a { color: #38bdf8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Create Account</h2>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form method="POST">
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="password" name="password" placeholder="Password (min 6 chars)" required>
+            <button type="submit">Register</button>
+        </form>
+        <p>Already have an account? <a href="{{ url_for('login') }}">Log In</a></p>
     </div>
-
-    {% if error %}
-        <div class="bg-rose-950 text-rose-300 p-3 rounded mb-4 text-xs border border-rose-800 font-medium">{{ error }}</div>
-    {% endif %}
-
-    <form method="POST" class="space-y-4">
-        <div>
-            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Email Address</label>
-            <input type="email" name="email" required class="w-full bg-slate-950 border border-slate-700 rounded p-2.5 text-sm text-white focus:outline-none focus:border-cyan-500" placeholder="user@example.com">
-        </div>
-        <div>
-            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Password (Min 6 Characters)</label>
-            <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-700 rounded p-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
-        </div>
-        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 rounded transition text-sm shadow-md">Register Account</button>
-    </form>
-    
-    <p class="text-xs text-slate-400 mt-5 text-center">Already registered? <a href="/login" class="text-cyan-400 hover:underline font-medium">Log in here</a></p>
-</div>
-{% endblock %}
+</body>
+</html>
