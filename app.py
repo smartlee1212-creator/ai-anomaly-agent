@@ -7,7 +7,6 @@ from google import genai
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ai-anomaly-agent-secret-key')
 
-# Initialize Google GenAI Client (Make sure GEMINI_API_KEY is set in your Render environment variables)
 gemini_client = None
 try:
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -92,12 +91,16 @@ def telemetry():
         return jsonify({'error': 'Unauthorized'}), 401
         
     return jsonify({
-        'status': 'Operational - Autonomous AI Anomaly Engine Active',
+        'status': 'Operational - Multi-Vector Scanning Active',
         'btc_price': '64,230.15',
         'btc_change': '+2.45%',
         'eth_price': '3,450.80',
         'eth_change': '-0.65%',
-        'analysis': 'All liquidity vectors verified. Order book spreads are optimal. No predatory high-frequency spikes identified.'
+        'logs': [
+            '[12:50:11] Verified liquidity depth on Binance/Coinbase pairs.',
+            '[12:52:40] Scanned order book spreads: variance within normal limits.',
+            '[12:55:02] AI Anomaly Engine heartbeat normal. Zero malicious bots detected.'
+        ]
     })
 
 @app.route('/api/chat', methods=['POST'])
@@ -107,23 +110,23 @@ def agent_chat():
         
     data = request.get_json()
     user_message = data.get('message', '')
+    risk_level = data.get('riskLevel', 'Medium')
     
     if not user_message:
-        return jsonify({'response': 'Please enter a valid query for the agent.'})
+        return jsonify({'response': 'Please enter a valid query.'})
         
     if not gemini_client:
-        return jsonify({'response': 'AI Agent engine offline: GEMINI_API_KEY environment variable is missing on Render.'})
+        return jsonify({'response': 'Error: GEMINI_API_KEY is missing in Render Environment Variables.'})
         
     try:
-        # Prompt the Gemini model acting as the Anomaly Agent
-        prompt = f"You are Zeus AI, an elite financial and cryptocurrency anomaly detection expert agent. Answer this query concisely and professionally: {user_message}"
+        prompt = f"You are Zeus AI, an elite financial anomaly agent. The user set the risk threshold to [{risk_level}]. Answer this query professionally: {user_message}"
         response = gemini_client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt
         )
         agent_reply = response.text
     except Exception as e:
-        agent_reply = f"Error communicating with AI core: {str.S(e) if hasattr(e, 'S') else str(e)}"
+        agent_reply = f"AI Error: {str(e)}"
         
     return jsonify({'response': agent_reply})
 

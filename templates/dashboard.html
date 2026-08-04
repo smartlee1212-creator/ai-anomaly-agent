@@ -15,15 +15,17 @@
         .metric { font-size: 1.5rem; font-weight: bold; margin: 10px 0; }
         .positive { color: #4ade80; }
         .negative { color: #f87171; }
-        .status-banner { background: #0284c7; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; }
-        .chat-container { display: flex; flex-direction: column; height: 250px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; overflow-y: auto; margin-bottom: 15px; font-family: monospace; font-size: 0.9rem; }
+        .status-banner { background: #0284c7; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 6px; border: 1px solid #334155; }
+        .controls select { background: #1e293b; color: white; border: 1px solid #334155; padding: 6px; border-radius: 4px; }
+        .chat-container { display: flex; flex-direction: column; height: 220px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; overflow-y: auto; margin-bottom: 15px; font-family: monospace; font-size: 0.9rem; }
         .message { margin-bottom: 10px; line-height: 1.4; }
         .user-msg { color: #38bdf8; }
         .agent-msg { color: #4ade80; }
         .chat-input-row { display: flex; gap: 10px; }
         .chat-input-row input { flex: 1; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; }
         .chat-input-row button { padding: 10px 20px; background: #0284c7; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .chat-input-row button:hover { background: #0369a1; }
+        .logs-box { background: #0f172a; border: 1px solid #334155; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #94a3b8; height: 80px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -32,7 +34,10 @@
         <a href="{{ url_for('logout') }}" class="logout">Log Out</a>
     </header>
 
-    <div id="status-banner" class="status-banner">Loading system metrics...</div>
+    <div class="status-banner">
+        <span id="status-text">Status: Initializing...</span>
+        <span style="font-size: 0.85rem; background: #0369a1; padding: 4px 8px; border-radius: 4px;">v2.5 Live</span>
+    </div>
 
     <div class="grid">
         <div class="card" style="margin-bottom:0;">
@@ -49,13 +54,28 @@
 
     <div class="card" style="margin-top: 20px;">
         <h3>Interactive Agent Command Center</h3>
+        
+        <div class="controls">
+            <label for="risk-select"><strong>Anomaly Sensitivity:</strong></label>
+            <select id="risk-select">
+                <option value="Low">Low (Major Spikes Only)</option>
+                <option value="Medium" selected>Medium (Standard Scan)</option>
+                <option value="Aggressive">Aggressive (High-Frequency)</option>
+            </select>
+        </div>
+
         <div id="chat-box" class="chat-container">
-            <div class="message agent-msg">System: Connected to Anomaly Agent core. Type a command or ask for market analysis below.</div>
+            <div class="message agent-msg">System: Connected to Anomaly Agent core. Ask for market analysis below.</div>
         </div>
         <div class="chat-input-row">
-            <input type="text" id="user-input" placeholder="Ask agent to analyze trends or check anomalies..." onkeydown="if(event.key === 'Enter') sendChatMessage()">
+            <input type="text" id="user-input" placeholder="Ask agent about market trends..." onkeydown="if(event.key === 'Enter') sendChatMessage()">
             <button onclick="sendChatMessage()">Send</button>
         </div>
+    </div>
+
+    <div class="card">
+        <h3>Live Telemetry & Scanner Logs</h3>
+        <div id="logs-box" class="logs-box">Fetching live node logs...</div>
     </div>
 
     <script>
@@ -74,40 +94,42 @@
                 ethChangeEl.innerText = "24h Change: " + data.eth_change;
                 ethChangeEl.className = data.eth_change.startsWith("+") ? "positive" : "negative";
 
-                document.getElementById('status-banner').innerText = "Status: " + data.status;
+                document.getElementById('status-text').innerText = "Status: " + data.status;
+
+                let logsHtml = "";
+                data.logs.forEach(log => { logsHtml += `<div>${log}</div>`; });
+                document.getElementById('logs-box').innerHTML = logsHtml;
             } catch (err) {
-                console.error("Telemetry fetch error:", err);
+                console.error("Telemetry error:", err);
             }
         }
 
         async function sendChatMessage() {
             let inputField = document.getElementById('user-input');
             let chatBox = document.getElementById('chat-box');
+            let riskSelect = document.getElementById('risk-select');
             let messageText = inputField.value.trim();
             
             if(!messageText) return;
 
-            // Append User Message
             chatBox.innerHTML += `<div class="message user-msg">You: ${messageText}</div>`;
             inputField.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Append Loading Indicator
             let loadingId = 'loading-' + Date.now();
-            chatBox.innerHTML += `<div class="message agent-msg" id="${loadingId}">Agent: Analyzing data...</div>`;
+            chatBox.innerHTML += `<div class="message agent-msg" id="${loadingId}">Agent: Analyzing telemetry...</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
                 let response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: messageText })
+                    body: JSON.stringify({ message: messageText, riskLevel: riskSelect.value })
                 });
                 let data = await response.json();
-                
                 document.getElementById(loadingId).innerText = `Agent: ${data.response}`;
             } catch (err) {
-                document.getElementById(loadingId).innerText = `Agent: Error processing request.`;
+                document.getElementById(loadingId).innerText = `Agent: Communication failure.`;
             }
             chatBox.scrollTop = chatBox.scrollHeight;
         }
