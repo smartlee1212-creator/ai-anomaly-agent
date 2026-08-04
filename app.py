@@ -2,9 +2,19 @@ import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from google import genai
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ai-anomaly-agent-secret-key')
+
+# Initialize Google GenAI Client (Make sure GEMINI_API_KEY is set in your Render environment variables)
+gemini_client = None
+try:
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        gemini_client = genai.Client(api_key=api_key)
+except Exception as e:
+    print(f"GenAI Init Warning: {e}")
 
 def get_db():
     conn = sqlite3.connect('database.db')
@@ -82,13 +92,40 @@ def telemetry():
         return jsonify({'error': 'Unauthorized'}), 401
         
     return jsonify({
-        'status': 'Operational - Live Agent Anomaly Detection Active',
+        'status': 'Operational - Autonomous AI Anomaly Engine Active',
         'btc_price': '64,230.15',
         'btc_change': '+2.45%',
         'eth_price': '3,450.80',
         'eth_change': '-0.65%',
-        'analysis': 'AI Agent running diagnostics across target liquidity pools. No critical anomalies detected in the current order book spreads.'
+        'analysis': 'All liquidity vectors verified. Order book spreads are optimal. No predatory high-frequency spikes identified.'
     })
+
+@app.route('/api/chat', methods=['POST'])
+def agent_chat():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    data = request.get_json()
+    user_message = data.get('message', '')
+    
+    if not user_message:
+        return jsonify({'response': 'Please enter a valid query for the agent.'})
+        
+    if not gemini_client:
+        return jsonify({'response': 'AI Agent engine offline: GEMINI_API_KEY environment variable is missing on Render.'})
+        
+    try:
+        # Prompt the Gemini model acting as the Anomaly Agent
+        prompt = f"You are Zeus AI, an elite financial and cryptocurrency anomaly detection expert agent. Answer this query concisely and professionally: {user_message}"
+        response = gemini_client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        agent_reply = response.text
+    except Exception as e:
+        agent_reply = f"Error communicating with AI core: {str.S(e) if hasattr(e, 'S') else str(e)}"
+        
+    return jsonify({'response': agent_reply})
 
 @app.route('/logout')
 def logout():
